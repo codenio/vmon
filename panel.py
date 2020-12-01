@@ -28,6 +28,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.clear_btn.clicked.connect(self.clear_screen)
         self.plot_cb.currentTextChanged.connect(self.reconfigure_axes)
         self.interpolate_cb.currentTextChanged.connect(self.reconfigure_axes)
+        self.legend_chb.stateChanged.connect(self.reconfigure_axes)
+        self.peaks_chb.stateChanged.connect(self.reconfigure_axes)
 
     def open_image(self):
         formats = "sheets (*.csv *.xlsx)"
@@ -53,7 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.image.close()
             del self.image
 
-    def get_rx_spectrum(self, file_name, interpolation="Cubic Spline", plot="Raw"):
+    def get_rx_spectrum(self, file_name, interpolation="Cubic Spline"):
         # Resolution of IMon 512 USB is 0.166015625 nm = 166.015 pm
         x = np.arange(1510, 1595, 0.166015625, dtype=float)
         dx = np.arange(1510, 1595, 0.001000000, dtype=float)
@@ -74,11 +76,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             pass
 
-        if plot == "Normalised":
-            dy = dy / max(dy)
-        elif plot == "Desibles":
-            dy = 20 * np.log(dy / max(dy))
-
         return dx, dy
 
     def reconfigure_axes(self):
@@ -92,25 +89,67 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.ax.clear()
 
+        self.files = []
+        self.peaks = []
+
         for sheet_file in self.sheet_files[0]:
-            dx, dy = self.get_rx_spectrum(sheet_file, interpolation=self.interpolate_cb.currentText(),
-                                          plot=self.plot_cb.currentText())
-            self.ax.plot(dx, dy, label=sheet_file.split('/')[-1])
+            dx, dy = self.get_rx_spectrum(sheet_file, interpolation=self.interpolate_cb.currentText())
+            self.files.append(sheet_file.split('/')[-1].split('.')[0][-4:])
+            self.peaks.append(dx[dy.argmax()])
+            
+            plot=self.plot_cb.currentText()
+            
+            if plot == "Normalised":
+                dy = dy / max(dy)               
+            elif plot == "Desibles":
+                dy = 20 * np.log(dy / max(dy))
+
+            if self.legend_chb.isChecked():
+                if self.peaks_chb.isChecked():
+                    self.ax.plot(dx, dy, label=f"{sheet_file.split('/')[-1]},{dx[dy.argmax()]:.3f}")
+                else:
+                    self.ax.plot(dx, dy, label=f"{sheet_file.split('/')[-1]}")
+            else:
+                self.ax.plot(dx, dy)
+            
+            # self.ax.scatter(dx[ymaxp], dy[ymaxp],label = 'peak L:' + ))
 
         if self.plot_cb.currentText() == "Raw":
+            self.ax.set_title("FBG Spectrums")
             self.ax.set_ylabel("Amplitude (AU)")
+            self.ax.set_xlabel("Wavelength (nm)")
+            self.ax.set_xlim(1511, 1594)
+
+            if self.legend_chb.isChecked():
+                self.ax.legend()
 
         if self.plot_cb.currentText() == "Normalised":
+            self.ax.set_title("Normalised FBG Spectrums")
             self.ax.set_ylabel("Normalised Amplitude (AU)")
+            self.ax.set_xlabel("Wavelength (nm)")
+            self.ax.set_xlim(1511, 1594)
+            if self.legend_chb.isChecked():
+                self.ax.legend()
+
+        if self.plot_cb.currentText() == "Peaks":
+            self.ax.clear()
+            self.ax.set_title("Peaks in FBG Spectrums")
+            self.ax.set_ylabel("Peak Wavelength (nm)")
+            self.ax.set_xlabel("Files")
+            self.ax.plot(np.arange(len(self.peaks)), self.peaks)
+            self.ax.plot(self.files, self.peaks)
+
 
         if self.plot_cb.currentText() == "Desibels":
+            self.ax.set_title("FBG Spectrums in Desibels")
             self.ax.set_ylabel("Amplitude (dB)")
+            self.ax.set_xlabel("Wavelength (nm)")
+            self.ax.set_xlim(1511, 1594)
+            if self.legend_chb.isChecked():
+                self.ax.legend()
 
-        self.ax.legend()
-        self.ax.set_title("FBG Spectrums")
-        self.ax.set_xlabel("Wavelength (nm)")
         self.ax.grid("True")
-        self.ax.set_xlim(1511, 1594)
+        
         # self.fig.subplots_adjust(top=0.921,
         #     bottom=0.123,
         #     left=0.169,

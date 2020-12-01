@@ -80,6 +80,11 @@
          </item>
          <item>
           <property name="text">
+           <string>Peaks</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>Desibles</string>
           </property>
          </item>
@@ -109,6 +114,23 @@
            <string>Linear</string>
           </property>
          </item>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="peaks_chb">
+         <property name="text">
+          <string>Peaks</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="legend_chb">
+         <property name="text">
+          <string>Legend</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
       </layout>
