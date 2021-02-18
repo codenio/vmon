@@ -61,9 +61,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dx = np.arange(1510, 1595, 0.001000000, dtype=float)
 
         # load data into data frame
-        df = pd.read_csv(file_name, dtype=float, usecols=[i for i in range(3, 515)], sep="\t", skiprows=2)
+        df = pd.read_csv(file_name,sep="\t")
+        df = df[[f"Pixel {i}" for i in range(1, 513)]]
         # calculate mean of all the entries and reverse it
-        mean = df.mean()[::-1]
+        mean = df.mean().values[::-1]
 
         if interpolation == "Cubic Spline":
             # perform cublic spline interpolation
@@ -96,11 +97,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             dx, dy = self.get_rx_spectrum(sheet_file, interpolation=self.interpolate_cb.currentText())
             self.files.append(sheet_file.split('/')[-1].split('.')[0][-4:])
             self.peaks.append(dx[dy.argmax()])
-            
+
             plot=self.plot_cb.currentText()
-            
+
             if plot == "Normalised":
-                dy = dy / max(dy)               
+                dy = dy / max(dy)
             elif plot == "Desibles":
                 dy = 20 * np.log(dy / max(dy))
 
@@ -111,7 +112,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     self.ax.plot(dx, dy, label=f"{sheet_file.split('/')[-1]}")
             else:
                 self.ax.plot(dx, dy)
-            
+
             # self.ax.scatter(dx[ymaxp], dy[ymaxp],label = 'peak L:' + ))
 
         if self.plot_cb.currentText() == "Raw":
@@ -149,7 +150,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.ax.legend()
 
         self.ax.grid("True")
-        
+
         # self.fig.subplots_adjust(top=0.921,
         #     bottom=0.123,
         #     left=0.169,
